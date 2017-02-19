@@ -18,29 +18,31 @@ class Form(Resource):
 		response = ''
 		i=0
 		form = None
-		# try:
-		parser = reqparse.RequestParser()
-		parser.add_argument('formstring',type=str, help='Form JSON String')
-		args = parser.parse_args()
-		formstring = args['formstring']
-		formdict = json.loads(formstring)
-		print(formdict)
-		form = Forms(name=formdict['formname'], password=formdict['formpass'], json=str(formdict['form_data']))
-		form.add(form)
-		query = "CREATE TABLE "+" "+formdict["formname"]+"("
-		for k in formdict['form_data']['fields']:
-			if i != 0:
-				query = query+","
-			query=query+str(k['label'].replace(" ","").replace("?","").lower())+" VARCHAR(1000)"
-			i+=1
-		query = query+")"
-		db.engine.execute(query)
-		db.session.commit()
-		response = {'status_code':110}
-		# except Exception as e:
-		# 	if form is not None:
-		# 		form.rollback()
-		# 	response = {'status_code':111}
+		try:
+			parser = reqparse.RequestParser()
+			parser.add_argument('formstring',type=str, help='Form JSON String')
+			args = parser.parse_args()
+			formstring = args['formstring']
+			formdict = json.loads(formstring)
+			print(formdict)
+			form = Forms(name=formdict['formname'], password=formdict['formpass'], 
+				json=str(formdict['form_data']))
+			form.add(form)
+			query = "CREATE TABLE "+" "+formdict["formname"]+"("
+			for k in formdict['form_data']['fields']:
+				if i != 0:
+					query = query+","
+				query=query+str(k['label'].replace(" ","").replace("?","").lower())+
+				" VARCHAR(1000)"
+				i+=1
+			query = query+")"
+			db.engine.execute(query)
+			db.session.commit()
+			response = {'status_code':110}
+		except Exception as e:
+			if form is not None:
+				form.rollback()
+			response = {'status_code':111}
 		return jsonify(response)
 
 api.add_resource(Form, '/form')
