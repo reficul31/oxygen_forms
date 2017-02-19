@@ -1,70 +1,46 @@
-from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource, reqparse
-from flask_login import LoginManager, login_required, login_user, current_user, logout_user, UserMixin
-from models import User, Forms
-from itsdangerous import URLSafeTimedSerializer
-from datetime import timedelta
-import base64
-import hashlib
-import psutil
-
+from flask import Flask, render_template, jsonify
+from flask_restful import Api, Resource, reqparse
+import json
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
-app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=1)
-
-db = SQLAlchemy(app)
-
 api = Api(app)
+db = SQLAlchemy(app)
+from models import User, Forms
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = '/login'
-login_manager.session_protection = 'strong'
+@app.route('/')
+def index():
+	return render_template('index.html')
 
-class FormUser(UserMixin):
-	"""
-	User Class for flask-login
-	"""
-	def __init__(self, userid, password, forms):
-		self.id = userid
-		self.password = password
-		self.forms = forms
+class Form(Resource):
+	def post(self):
+		response = ''
+		i=0
+		form = None
+		# try:
+		parser = reqparse.RequestParser()
+		parser.add_argument('formstring',type=str, help='Form JSON String')
+		args = parser.parse_args()
+		formstring = args['formstring']
+		formdict = json.loads(formstring)
+		print(formdict)
+		form = Forms(name=formdict['formname'], password=formdict['formpass'], json=str(formdict['form_data']))
+		form.add(form)
+		query = "CREATE TABLE "+" "+formdict["formname"]+"("
+		for k in formdict['form_data']['fields']:
+			if i != 0:
+				query = query+","
+			query=query+str(k['label'].replace(" ","").replace("?","").lower())+" VARCHAR(1000)"
+			i+=1
+		query = query+")"
+		db.engine.execute(query)
+		db.session.commit()
+		response = {'status_code':110}
+		# except Exception as e:
+		# 	if form is not None:
+		# 		form.rollback()
+		# 	response = {'status_code':111}
+		return jsonify(response)
 
-	def get_auth_token(self):
-		"""
-		Encode a secure token for cookie
-		"""
-		data = [str(self.id), self.password]
-		return login_serializer.dumps(data)
-
-	@staticmethod
-	def get(userid = None, username = None):
-		user = None
-		if userid:
-			user = User.query.filter_by(id = userid).first()
-
-		elif username:
-			user = User.query.filter_by(username = username).first()
-
-		if user:
-			return FormUser(user.id, user.password, user.forms)
-
-		return None
-
-def hash_pass(password):
-	salted_password = password + app.secret_key
-	return hashlib.sha1(salted_password).hexdigest()
-
-@login_manager.user_loader
-def load_user(userid):
-	return FormUser.get(userid)
-
-@login_manager.token_loader
-def load_token(token):
-	max_age = app.config['REMEMBER_COOKIE_DURATION'].total_seconds()
-	data = login_serializer.loads(token, max_age=max_age)
-	user = FormUser.get(data[0])
-	if user and data[1] == user.password:
-		return user
-	return None
+api.add_resource(Form, '/form')
