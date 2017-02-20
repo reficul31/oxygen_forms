@@ -1,3 +1,4 @@
+# This file is to declare the models for the database which are concrete
 from flask import Flask
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
