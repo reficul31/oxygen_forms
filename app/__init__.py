@@ -41,8 +41,7 @@ class Form(Resource):
 			for k in formdict['form_data']['fields']:
 				if i != 0:
 					query = query+","
-				query=query+str(k['label'].replace(" ","").replace("?","").lower())+
-				" VARCHAR(1000)"
+				query=query+str(k['label'].replace(" ","_").replace("?","").lower())+" VARCHAR(1000)"
 				i+=1
 			query = query+")"
 			# Execute the query
