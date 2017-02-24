@@ -1,0 +1,92 @@
+<html>
+<head>
+<script src ="../static/jquery.js"></script>
+</head>
+<body>
+
+    <div class="container"> 
+        <div class="add panels">
+        <div class="jumbotron add-form-box">
+            <div class="add-form-meta">
+            {{res}}
+            <label for="eventname">Form Name</label>
+                <input name="eventname" class="add-form-meta-eventname form-control" placeholder="eventname"> <br>
+                <label for="eventpasskey">Form Password</label>
+                <input name="eventpasskey" class="add-form-meta-eventpasskey form-control" placeholder="eventpasskey">
+            </div>
+            <br>
+            <div class="add-form-fields">
+                <div class="add-form-options">
+                    <div class="add-form-option add-form-option-textbox">
+                        <span class="glyphicon glyphicon-plus"></span> Textbox
+                    </div>
+                    <div class="add-form-option add-form-option-checkbox">
+                        <i class="glyphicon glyphicon-plus"></i> Checkbox
+                    </div>
+                    <div class="add-form-option add-form-option-radiobutton">
+                        <i class="glyphicon glyphicon-plus"></i> Radio Button
+                    </div>
+                </div>
+                <div class="add-form-fields-construct">
+                </div>
+            </div>
+        </div>
+        <input class="col-md-offset-3 col-sm-offset-3" id="send" type="submit" name="submit">
+	</div>
+<form id ="senderform" action='/design' method='POST'>
+    <input type="hidden" id="sender" name= 'sender'>
+</form>
+</div>
+<script>
+$(document).ready(function() {
+    $(document).on('click', '.add-form-option-textbox', function() {
+        $('.add-form-fields-construct').append('<div class="form-element form-textbox"><span>Textbox</span>&nbsp &nbsp &nbsp<input class="form-control form-textbox-label" placeholder="label"></div>'); 
+        });
+$(document).on('click', '.add-form-option-checkbox', function() {
+    $('.add-form-fields-construct').append('<div class="form-element form-checkbox"><span>Checkbox</span>&nbsp &nbsp &nbsp<input class="form-control form-checkbox-label" placeholder="label"><input class="form-control form-checkbox-values" placeholder="comma separated values"></div>'); 
+    });
+$(document).on('click', '.add-form-option-radiobutton', function() {
+     $('.add-form-fields-construct').append('<div class="form-element form-radiobutton"><span>Radio Button</span>&nbsp &nbsp &nbsp<input class="form-control form-radiobutton-label" placeholder="label"><input class="form-control form-radiobutton-values" placeholder="comma separated values"></div>');
+});
+});
+$('#send').click(function()
+{
+    var formdata = {
+    formname: $('.add-form-meta-eventname').val(),
+    formpass: $('.add-form-meta-eventpasskey').val(),
+    form_data: {
+        fields: []
+    }
+  };
+$('.form-element').each(function(index) {
+    var field = {};
+    if ($(this).hasClass('form-textbox')) {
+        field = {
+            type: 'textbox',
+            label: $(this).children('input').val()
+        };
+    }
+    else if ($(this).hasClass('form-checkbox')) {
+        field = {
+            type: 'checkbox',
+            label: $(this).children('input').eq(0).val(),
+            options: $(this).children('input').eq(1).val()
+        };
+    }
+    else if ($(this).hasClass('form-radiobutton')) {
+        field = {
+            type: 'radiobutton',
+            label: $(this).children('input').eq(0).val(),
+            options: $(this).children('input').eq(1).val()
+        };
+    }
+    
+    formdata.form_data.fields.push(field);
+});
+formdata = JSON.stringify(formdata);
+document.getElementById('sender').value= formdata;
+$("#senderform").submit()
+});
+</script>
+</body>
+</html>
