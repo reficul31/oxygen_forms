@@ -1,0 +1,23 @@
+<h1>{{form.name}}</h1>
+<p>{{res}}</p>
+<form name ="oform" id="oform" action='/fill/{{form.id}}' method='POST' >
+{%for field in form.json['fields']%}
+	<p>{%if field.type == 'textbox'%}
+		<label>{{field.label}}</label>
+		<input type="text" name='{{field.label}}' />
+	{%endif%}</p>
+	<p>{%if field.type == 'checkbox'%}
+		<label>{{field.label}}</label>
+		{%for options in field.options.split(',')%}
+			<input type="checkbox" name="{{field.label}}" value="{{options}}" />{{options}}
+		{%endfor%}
+	{%endif%}</p>
+	<p>{%if field.type == 'radiobutton'%}
+		<label>{{field.label}}</label>
+		{%for options in field.options.split(',')%}
+			<input type="radio" name="{{field.label}}" value="{{options}}" />{{options}}
+		{%endfor%}
+	{%endif%}</p>
+{%endfor%}
+<input type="submit" name="Submit" />
+</form>
