@@ -78,9 +78,9 @@ def login():
 			if user and password == user.password:
 				login_user(user, remember=True)
 			else:
-				res = 'Enter valid login credentials'
+				res = 102
 	if current_user.is_authenticated:
-		return redirect('/')
+		return redirect('/home')
 	else:
 		return render_template('login.html', res = res)
 
@@ -92,17 +92,23 @@ def register():
 		password = request.form['password']
 		try:
 			user = User(username = username, password=password)
+			print("hello")
 			user.add(user)
-			res= 'Registration Successfull'
+			res= 100
 		except Exception:
-			res = 'Registration Unsuccessfull'
+			res = 102
 	return render_template('register.html', res=res)
 
-@app.route('/', methods=['GET','POST'])
+@app.route('/home', methods=['GET','POST'])
 @login_required
 def index():
-	print(current_user.id)
-	return render_template('index.html')
+	query = "select * from forms where user_id=%s"%current_user.id
+	res = db.session.execute(query)
+	return render_template('index.html', res=res)
+
+@app.route('/')
+def landing():
+	return render_template('landing.html')
 
 @app.route('/logout', methods=['GET'])
 @login_required
@@ -120,7 +126,8 @@ def designform():
 		data_file = request.form['sender']
 		data = json.loads(data_file)
 		try:
-			form = Forms(name=data['formname'], password=data['formpass'], json=json.dumps(data['form_data']))
+			print(current_user.id)
+			form = Forms(name=data['formname'], password=data['formpass'], json=json.dumps(data['form_data']), user_id=current_user.id)
 			form.add(form)
 			query = "CREATE TABLE "+" "+data["formname"]+"("
 			for k in data['form_data']['fields']:

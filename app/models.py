@@ -29,7 +29,6 @@ class User(Base):
 	id = Column(CHAR(5), unique=True, primary_key=True)
 	username = Column(VARCHAR(30), default=None, nullable=False, unique = True)
 	password = Column(VARCHAR(16), default=None, nullable= False)
-	# forms = relationship('Child')
 
 	def __init__(self, username, password):
 		self.id = ''.join(choice('0123456789') for i in range(5)) 
@@ -44,13 +43,14 @@ class Forms(Base):
 	name = Column(VARCHAR(16), default = None )
 	password = Column(VARCHAR(20), default = None)
 	json = Column(VARCHAR(1000), default = None, nullable=False )
-	# user_id = Column(CHAR(5), ForeignKey('user.id'))
+	user_id = Column(CHAR(5), ForeignKey('user.id'))
 	
-	def __init__(self, name, password, json):
+	def __init__(self, name, password, json, user_id):
 		self.id = ''.join(choice('0123456789') for i in range(5)) 
 		self.name =name
 		self.password = password
 		self.json = json
+		self.user_id = user_id
 
 	def __repr__(self):
 		return "<Form(name:%s)>"%self.name
