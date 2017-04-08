@@ -29,11 +29,15 @@ class User(Base):
 	id = Column(CHAR(5), unique=True, primary_key=True)
 	username = Column(VARCHAR(30), default=None, nullable=False, unique = True)
 	password = Column(VARCHAR(16), default=None, nullable= False)
+	name = Column(VARCHAR(16), default=None)
+	number = Column(VARCHAR(16), default=None)
 
-	def __init__(self, username, password):
+	def __init__(self, username, password, name, number):
 		self.id = ''.join(choice('0123456789') for i in range(5)) 
 		self.username = username
 		self.password = password
+		self.name = name
+		self.number = number
 
 	def __repr__(self):
 		return "<User(username:%s)>"%self.username
@@ -44,13 +48,15 @@ class Forms(Base):
 	password = Column(VARCHAR(20), default = None)
 	json = Column(VARCHAR(1000), default = None, nullable=False )
 	user_id = Column(CHAR(5), ForeignKey('user.id'))
+	desc = Column(VARCHAR(1000), default = None, nullable=False)
 	
-	def __init__(self, name, password, json, user_id):
+	def __init__(self, name, password, json, user_id, desc):
 		self.id = ''.join(choice('0123456789') for i in range(5)) 
 		self.name =name
 		self.password = password
 		self.json = json
 		self.user_id = user_id
+		self.desc = desc
 
 	def __repr__(self):
 		return "<Form(name:%s)>"%self.name
