@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, current_user, logout_user, UserMixin
 from datetime import timedelta
-from flask import Flask, render_template, jsonify, request, redirect
+from flask import Flask, render_template, jsonify, request, redirect, abort
 import json
 from itsdangerous import URLSafeTimedSerializer
 
@@ -28,10 +28,11 @@ def checkUserAuth(func):
 	return returnFunc
 
 class FormUser(UserMixin):
-	def __init__(self, id, username, password):
+	def __init__(self, id, username, password, name):
 		self.id = id
 		self.username = username
 		self.password = password
+		self.name = name
 
 	def get_auth_token(self):
 		data = [str(self.id), self.password]
@@ -46,7 +47,7 @@ class FormUser(UserMixin):
 			user = User.query.filter_by(username = username).first()
 
 		if user:
-			return FormUser(user.id, user.username, user.password)
+			return FormUser(user.id, user.username, user.password, user.name)
 		return None
 
 @login_manager.user_loader
@@ -90,9 +91,10 @@ def register():
 	if request.method == 'POST':
 		username = request.form['username']
 		password = request.form['password']
+		name = request.form['name']
+		number = request.form['number']
 		try:
-			user = User(username = username, password=password)
-			print("hello")
+			user = User(username = username, password=password, name=name, number=number)
 			user.add(user)
 			res= 100
 		except Exception:
@@ -104,7 +106,7 @@ def register():
 def index():
 	query = "select * from forms where user_id=%s"%current_user.id
 	res = db.session.execute(query)
-	return render_template('index.html', res=res)
+	return render_template('index.html', res=res, name=current_user.name)
 
 @app.route('/')
 def landing():
@@ -127,7 +129,7 @@ def designform():
 		data = json.loads(data_file)
 		try:
 			print(current_user.id)
-			form = Forms(name=data['formname'], password=data['formpass'], json=json.dumps(data['form_data']), user_id=current_user.id)
+			form = Forms(name=data['formname'], password=data['formpass'], json=json.dumps(data['form_data']), user_id=current_user.id, desc=data['formdesc'])
 			form.add(form)
 			query = "CREATE TABLE "+" "+data["formname"]+"("
 			for k in data['form_data']['fields']:
@@ -138,17 +140,17 @@ def designform():
 			query = query+")"
 			db.engine.execute(query)
 			db.session.commit()
-			res = 'Everything is Awesome'
+			res = 100
 		except Exception:
 			if form is not None:
 				form.rollback()
-				res = 'WRONG!!!'
-	return render_template('makeform.html', res = res)
+				res = 102
+	return render_template('makeform.html', res = res, name=current_user.name)
 
 @app.route('/fill/<id>', methods=['GET','POST'])
 def fillform(id):
-	form = Forms.query.filter_by(id = id).with_entities(Forms.name, Forms.json, Forms.id).first()
-	res = ''
+	form = Forms.query.filter_by(id = id).with_entities(Forms.name, Forms.json, Forms.id, Forms.desc).first()
+	res = 0
 	if request.method == 'POST':
 		try:
 			query = "INSERT INTO "+form.name+"("
@@ -165,8 +167,23 @@ def fillform(id):
 			query = query+")"
 			db.session.execute(query)
 			db.session.commit()
-			res = 'Form Submitted Successfully'
+			res = 100
 		except Exception:
-			res = 'An Error occured'
-	rendform = {'name':form.name,'json':json.loads(form.json),'id':form.id}
+			res = 102
+	rendform = {'name':form.name,'json':json.loads(form.json),'id':form.id, 'desc':form.desc}
 	return render_template('fillform.html', form = rendform, res=res)
+
+@app.route('/show/<id>')
+@login_required
+def showform(id):
+	form = Forms.query.filter_by(id = id, user_id = current_user.id).with_entities(Forms.name, Forms.json).first()
+	if form is not None:
+		query = "select * from %s"%form.name
+		data = db.session.execute(query)
+		return render_template('showform.html', data=data, struct=json.loads(form.json), name=form.name)
+	else:
+		abort(404)
+
+@app.errorhandler(404)
+def reroute(e):
+	return render_template('404.html')
